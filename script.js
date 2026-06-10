@@ -256,8 +256,15 @@ function handleInfoReceived(raw) {
     console.log('[SIP INFO] phase=' + (data.phase ?? '?'), data)
   }
 
-  // The account-check moment: { "phase": "account_check", "accountUnlocked": true }
-  if (data.phase === 'account_check' && typeof data.accountUnlocked === 'boolean') {
+  // The account-check moment. Two payload shapes are supported:
+  //   { "accountStatus": "unlocked" | "locked" | "denied" }   (current backend)
+  //   { "phase": "account_check", "accountUnlocked": true }    (legacy)
+  const status = data.accountStatus ?? data.metadata?.accountStatus
+  if (typeof status === 'string') {
+    if (status === 'unlocked')                        runAccountCheck(true)
+    else if (status === 'denied' || status === 'failed') runAccountCheck(false)
+    // any other value (e.g. "locked") leaves the card in its current state
+  } else if (data.phase === 'account_check' && typeof data.accountUnlocked === 'boolean') {
     runAccountCheck(data.accountUnlocked)
   }
 
