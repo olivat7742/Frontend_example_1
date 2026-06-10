@@ -30,7 +30,8 @@ Transcript lines are streamed word-by-word from either form:
 | `index.html` | Welcome splash + locked/unlock card + bottom call bar |
 | `style.css`  | All styling and animations (lock, confetti, states) |
 | `script.js`  | Call wiring + `handleInfoReceived()` dispatcher + state machine |
-| `webRTCSDK.js` | Headless WebRTC/SIP adapter (JsSIP) — connects the call and surfaces metadata |
+| `webRTCSDK.js` | Headless WebRTC/SIP adapter — connects the call and surfaces metadata |
+| `jssip.min.js` | Vendored JsSIP v3.10.1 browser build (the WebRTC/SIP engine) |
 
 ## Configuration (top of `script.js`)
 
@@ -57,8 +58,9 @@ exposes `createWebRTCClient({ endpointUrl, userId })`. On a call it:
 4. Emits incoming SIP INFO verbatim via `infoReceived` → `handleInfoReceived()`.
 
 **No credentials are bundled** — they're fetched live from the public endpoint URL
-at call time. JsSIP is loaded at runtime from a pinned CDN build (`jssip@3.10.1`,
-the same version the official widget uses); requires network access on first call.
+at call time. JsSIP is **vendored** as `jssip.min.js` (v3.10.1, the official browser
+build, the same version the widget uses) and loaded via a `<script>` tag — no
+runtime CDN dependency.
 
 > The endpoint must allow your page's origin via CORS. The configured GitHub Pages
 > origin is already allow-listed by the trial endpoint.

@@ -22,14 +22,11 @@
  *      'infoReceived' event so script.js can parse phase / _transcription itself.
  *
  * No credentials are bundled: they are fetched live from the public endpoint URL.
- * JsSIP is loaded at runtime from a pinned CDN build (jssip@3.10.1, the same
- * version the official widget uses).
+ * JsSIP is vendored locally (jssip.min.js, v3.10.1 — the same version the official
+ * widget uses) and must be loaded via a <script> tag before this file.
  */
 ;(function () {
   'use strict'
-
-  // Pinned JsSIP ESM build (self-contained, no sub-imports). Exposes { UA, WebSocketInterface, ... }.
-  var JSSIP_URL = 'https://cdn.jsdelivr.net/npm/jssip@3.10.1/+esm'
 
   // Default ICE config. A public STUN server is enough for a server-anchored
   // bot call; add a TURN server here if you need to traverse strict NATs.
@@ -37,17 +34,12 @@
 
   var REGISTER_TIMEOUT_MS = 15000
 
-  // --- JsSIP loader (cached) -------------------------------------------------
-  var _jssip = null
-  function loadJsSIP() {
-    if (_jssip) return _jssip
-    _jssip = import(JSSIP_URL).then(function (m) {
-      var UA = m.UA || (m.default && m.default.UA)
-      var WebSocketInterface = m.WebSocketInterface || (m.default && m.default.WebSocketInterface)
-      if (!UA || !WebSocketInterface) throw new Error('JsSIP failed to load from CDN')
-      return { UA: UA, WebSocketInterface: WebSocketInterface }
-    })
-    return _jssip
+  // --- JsSIP accessor --------------------------------------------------------
+  // jssip.min.js (UMD) registers window.JsSIP synchronously via its <script> tag.
+  function getJsSIP() {
+    var J = window.JsSIP
+    if (J && J.UA && J.WebSocketInterface) return J
+    return null
   }
 
   // --- Tiny event emitter ----------------------------------------------------
@@ -165,8 +157,12 @@
       if (st.connected) return Promise.resolve(client)
       if (st.connecting) return st.connecting
 
-      st.connecting = loadJsSIP().then(function (J) {
-        return new Promise(function (resolve, reject) {
+      var J = getJsSIP()
+      if (!J) {
+        return Promise.reject(new Error('JsSIP not loaded — include <script src="jssip.min.js"> before webRTCSDK.js'))
+      }
+
+      st.connecting = new Promise(function (resolve, reject) {
           var settled = false
           var socket = new J.WebSocketInterface(sip.wsUri)
           var ua = new J.UA({
@@ -199,7 +195,6 @@
           setTimeout(function () {
             if (!settled) { settled = true; reject(new Error('SIP registration timed out')) }
           }, REGISTER_TIMEOUT_MS)
-        })
       })
 
       // Allow a later retry if this attempt fails.
