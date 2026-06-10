@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Access &amp; Recovery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Animated background -->
+  <div class="bg-orbs">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+  </div>
+
+  <!-- Initial splash -->
+  <div id="welcome-screen">
+    <div class="welcome-content">
+      <div class="welcome-logo" data-brand>SecureAccount</div>
+      <h1>Account Access &amp; Recovery</h1>
+      <p class="welcome-sub">
+        Locked out of your account? Our AI assistant will verify your identity
+        and unlock your access in seconds &mdash; no waiting, no reset emails.
+      </p>
+      <div class="welcome-actions">
+        <button id="welcome-start-btn" class="btn-primary">
+          <span class="mic-dot"></span> Talk to Assistant
+        </button>
+      </div>
+      <div class="welcome-trust">
+        <span class="trust-item">&#128274; End-to-end secured</span>
+        <span class="trust-dot">&middot;</span>
+        <span class="trust-item">&#9889; Instant verification</span>
+        <span class="trust-dot">&middot;</span>
+        <span class="trust-item">&#128737; No reset links</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main app -->
+  <div id="app" class="hidden">
+
+    <!-- Nav -->
+    <header id="app-nav">
+      <div class="nav-logo"><span data-brand>SecureAccount</span> <span class="nav-logo-sub">Account</span></div>
+      <div id="status-pill" class="status-pill locked">
+        <span class="status-dot"></span>
+        <span id="status-pill-label">Locked</span>
+      </div>
+    </header>
+
+    <!-- The account security card; swaps state in place -->
+    <main id="account-stage">
+
+      <div id="account-card" class="account-card state-locked">
+
+        <!-- Lock visual -->
+        <div class="lock-visual">
+          <div class="lock-ring"></div>
+          <div class="lock-ring lock-ring-2"></div>
+          <svg class="lock-svg" viewBox="0 0 120 140" aria-hidden="true">
+            <!-- Shackle (the part that lifts on unlock) -->
+            <path class="lock-shackle" d="M35 60 V42 a25 25 0 0 1 50 0 V60" fill="none"
+                  stroke="currentColor" stroke-width="9" stroke-linecap="round"/>
+            <!-- Body -->
+            <rect class="lock-body" x="22" y="58" width="76" height="64" rx="14"
+                  fill="currentColor"/>
+            <!-- Keyhole -->
+            <circle class="lock-keyhole" cx="60" cy="84" r="8" fill="#fff"/>
+            <rect class="lock-keyhole" x="56" y="88" width="8" height="20" rx="4" fill="#fff"/>
+          </svg>
+          <!-- Success checkmark (revealed on unlock) -->
+          <svg class="check-svg" viewBox="0 0 52 52" aria-hidden="true">
+            <path class="check-path" fill="none" stroke="currentColor" stroke-width="5"
+                  stroke-linecap="round" stroke-linejoin="round" d="M14 27 l8 8 l16 -18"/>
+          </svg>
+          <!-- Confetti burst container -->
+          <div class="confetti" id="confetti"></div>
+        </div>
+
+        <!-- Text content -->
+        <h2 id="account-title">Account Locked</h2>
+        <p id="account-message" class="account-message">
+          For your security, this account is temporarily locked. Speak with our
+          assistant to verify your identity and restore access.
+        </p>
+
+        <!-- Verifying spinner row (shown during the check) -->
+        <div id="verify-row" class="verify-row hidden">
+          <span class="verify-spinner"></span>
+          <span>Verifying your identity&hellip;</span>
+        </div>
+
+        <!-- Details revealed once unlocked -->
+        <div id="unlock-details" class="unlock-details hidden">
+          <div class="unlock-detail-row">
+            <span class="ud-icon">&#10003;</span>
+            <div>
+              <div class="ud-label">Identity verified</div>
+              <div class="ud-sub">Confirmed by the assistant</div>
+            </div>
+          </div>
+          <div class="unlock-detail-row">
+            <span class="ud-icon">&#10003;</span>
+            <div>
+              <div class="ud-label">Access restored</div>
+              <div class="ud-sub">You can sign in again right away</div>
+            </div>
+          </div>
+          <button class="btn-primary unlock-cta" onclick="resetApp()">Continue to Dashboard &rarr;</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom bar -->
+    <div id="bottom-bar">
+      <div id="transcript-area" class="transcript-area hidden">
+        <div id="transcript-text"></div>
+      </div>
+      <div class="call-bar">
+        <button id="ai-call-btn" class="ai-call-btn" onclick="startAiCall()">
+          <span class="mic-dot"></span> <span id="ai-call-btn-label">Talk to Assistant</span>
+        </button>
+        <button id="mute-btn" class="mute-btn hidden" onclick="toggleMute()">
+          <svg id="mute-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          <span id="mute-label">Mute</span>
+        </button>
+        <button id="end-call-btn" class="end-call-btn hidden" onclick="endAiCall()">&#10005; End Call</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Demo controls -->
+  <div id="demo-panel" class="demo-panel">
+    <div class="demo-header">
+      <span>Demo Controls</span>
+      <button id="demo-toggle-btn" onclick="toggleDemo()">&minus;</button>
+    </div>
+    <div id="demo-body" class="demo-body">
+      <p class="demo-hint">Simulate AI backend payloads:</p>
+
+      <div class="demo-section">
+        <div class="demo-label">Account check</div>
+        <div class="demo-buttons">
+          <button onclick="simulatePayload({phase:'account_check',accountUnlocked:true})">Unlock &#10003;</button>
+          <button onclick="simulatePayload({phase:'account_check',accountUnlocked:false})">Deny &#10005;</button>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <div class="demo-label">Transcript stream</div>
+        <div class="demo-buttons">
+          <button onclick="simulatePayload({_transcription:{originator:'bot',messages:[{text:'Thank you, I have verified your identity. I am unlocking your account now, you will be able to sign in again immediately.'}]}})">Stream text</button>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <div class="demo-label">Reset</div>
+        <div class="demo-buttons">
+          <button onclick="resetApp()">Back to locked</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="webRTCSDK.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
