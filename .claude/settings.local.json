@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(gh api repos/Cognigy/click-to-call-widget --jq '{name:.name, default_branch:.default_branch, desc:.description, pushed:.pushed_at}' 2>&1)",
+      "PowerShell(gh api repos/Cognigy/click-to-call-widget/contents --jq '.[].name' 2>&1)"
+    ]
+  }
+}

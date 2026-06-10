@@ -30,7 +30,7 @@ Transcript lines are streamed word-by-word from either form:
 | `index.html` | Welcome splash + locked/unlock card + bottom call bar |
 | `style.css`  | All styling and animations (lock, confetti, states) |
 | `script.js`  | Call wiring + `handleInfoReceived()` dispatcher + state machine |
-| `webRTCSDK.js` | **Required, not included** — the Cognigy/JsSIP WebRTC SDK (see below) |
+| `webRTCSDK.js` | Headless WebRTC/SIP adapter (JsSIP) — connects the call and surfaces metadata |
 
 ## Configuration (top of `script.js`)
 
@@ -43,16 +43,25 @@ Transcript lines are streamed word-by-word from either form:
 URL params: `?userId=...` (session id in Cognigy's Interaction Panel),
 `?name=...` (customer name sent to the agent on connect).
 
-## The missing dependency: `webRTCSDK.js`
+## How the connection works (`webRTCSDK.js`)
 
-This is the shared Cognigy WebRTC SDK (built on JsSIP). It is **not** the NiCE
-AudioCodes `ac_webrtc.min.js` — that's a different SDK. The page loads it via
-`<script src="webRTCSDK.js">` and it registers `window.WebRTCSDK`.
+`webRTCSDK.js` is a small, dependency-free adapter that reimplements the connection
+logic of the official Cognigy click-to-call widget
+(github.com/Cognigy/click-to-call-widget). It registers `window.WebRTCSDK` and
+exposes `createWebRTCClient({ endpointUrl, userId })`. On a call it:
 
-Get it from the Nexora repo at `public/webRTCSDK.js` (identical to
-`public/moments/webRTCSDK.js`) and drop the file into this folder. Until it's
-present, the page loads fine and the **Demo Controls** panel still drives the full
-unlock animation — only the live call will error.
+1. `GET <endpointUrl>` → reads `endpointSettings.sipConnectivityInfo`
+   (`wsUri`, `realm`, `username`, `password`, `applicationSid`).
+2. Registers a JsSIP user agent as `sip:<userId>@<realm>`.
+3. Calls `app-<applicationSid>` (the Cognigy voice app).
+4. Emits incoming SIP INFO verbatim via `infoReceived` → `handleInfoReceived()`.
+
+**No credentials are bundled** — they're fetched live from the public endpoint URL
+at call time. JsSIP is loaded at runtime from a pinned CDN build (`jssip@3.10.1`,
+the same version the official widget uses); requires network access on first call.
+
+> The endpoint must allow your page's origin via CORS. The configured GitHub Pages
+> origin is already allow-listed by the trial endpoint.
 
 ## Running locally
 
